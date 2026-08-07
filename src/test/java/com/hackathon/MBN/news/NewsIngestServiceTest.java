@@ -80,7 +80,7 @@ class NewsIngestServiceTest {
         when(client.search("외식 트렌드", 5)).thenReturn(List.of(c));
         when(rawArticles.existsByContentHash(org.mockito.ArgumentMatchers.anyString())).thenReturn(false);
 
-        var result = new NewsIngestService(client, rawArticles, sources)
+        var result = new NewsIngestService(client, rawArticles, sources, bodyFetcher)
                 .ingestByCategory(com.hackathon.MBN.domain.type.NewsCategory.식품, 5);
 
         assertThat(result.fetched()).isEqualTo(3);
