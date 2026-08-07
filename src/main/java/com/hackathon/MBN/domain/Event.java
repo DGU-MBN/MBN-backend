@@ -58,6 +58,9 @@ public class Event {
     /** pending_review일 때만 채움: license_unreviewed / fact_conflict 등 */
     private String reviewReason;
 
+    /** 출처 표시용 바이라인. NEWS_RSS(뉴스) 출신이면 "뉴스", 블로그/카페/유튜브(AI가 원문에서 재구성) 출신이면 "AI기자". */
+    private String byline;
+
     // AI 지역/카테고리 추출 결과. 지오코딩 전이라 EventLocation 대신 여기 임시 보관
     private String locationName;
     private String adminArea;

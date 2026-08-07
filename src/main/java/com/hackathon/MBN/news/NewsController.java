@@ -1,5 +1,6 @@
 package com.hackathon.MBN.news;
 
+import com.hackathon.MBN.domain.type.EventStatus;
 import com.hackathon.MBN.repository.EventRepository;
 import com.hackathon.MBN.repository.ShortRepository;
 import java.util.List;
@@ -20,10 +21,10 @@ public class NewsController {
         this.shorts = shorts;
     }
 
-    // AI가 원문에서 추출한 한글 사실관계(Event)
+    // AI가 원문에서 추출한 한글 사실관계(Event). 에디터 승인 대기 중(PENDING_REVIEW)인 항목은 제외.
     @GetMapping("/korean")
     public List<KoreanNewsResponse> getKoreanNews() {
-        return events.findAllByOrderByIdDesc().stream()
+        return events.findByStatusNotOrderByIdDesc(EventStatus.PENDING_REVIEW).stream()
                 .map(KoreanNewsResponse::from)
                 .toList();
     }

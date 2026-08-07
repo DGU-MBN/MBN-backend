@@ -21,7 +21,47 @@ spring:
 naver:
   client-id: ${NAVER_CLIENT_ID:}
   client-secret: ${NAVER_CLIENT_SECRET:}
+  open-client-id: ${NAVER_OPEN_CLIENT_ID:}
+  open-client-secret: ${NAVER_OPEN_CLIENT_SECRET:}
 
 openai:
   api-key: ${OPENAI_API_KEY:}
   model: ${OPENAI_MODEL:gpt-4o-mini}
+
+youtube:
+  api-key: ${YOUTUBE_API_KEY:}
+
+# channelId/query를 안 주고 /admin/ingest* 호출하면 여기서 무작위로 골라 씀 (count로 몇 개 뽑을지 조절).
+# queries-by-category는 NewsCategory(정치행정/경제산업/사회일반/문화행사/스포츠연예/보건복지) 키로 나눠뒀고,
+# count>1이면 카테고리를 섞어서 순회하며 뽑기 때문에 한쪽 카테고리로 쏠리지 않는다.
+# youtube-channel-ids: YouTube Data API(channels.list)로 실제 존재를 확인하고 넣은 채널들.
+watchlist:
+  queries-by-category:
+    정치행정:
+      - 국회
+      - 대통령실
+      - 지방자치단체
+    경제산업:
+      - 반도체
+      - 부동산 시장
+      - 주식시장
+    사회일반:
+      - 교육정책
+      - 환경오염
+      - 사건사고
+    문화행사:
+      - 영화 개봉
+      - 전시회
+      - 지역축제
+    스포츠연예:
+      - 아이유
+      - 프로야구
+      - 뉴진스
+    보건복지:
+      - 의료정책
+      - 국민건강보험
+      - 복지예산
+  youtube-channel-ids:
+    - UC4UnP3v-iaFaLdtKwp84Pmw # 이찬원
+    - UCWlV3Lz_55UaX4JsMj-z__Q # 뉴스TVCHOSUN (TV조선 뉴스)
+    - UC1reoal0esOCQkomB97e9wQ # 디스패치 / Dispatch

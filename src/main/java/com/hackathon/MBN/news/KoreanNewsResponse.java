@@ -10,6 +10,7 @@ public record KoreanNewsResponse(
         String locationName,
         String adminArea,
         String summary,
+        String byline,
         Instant publishedAt) {
 
     static KoreanNewsResponse from(Event event) {
@@ -20,6 +21,7 @@ public record KoreanNewsResponse(
                 event.getLocationName(),
                 event.getAdminArea(),
                 event.getSummary(),
+                event.getByline(),
                 event.getPublishedAt());
     }
 }

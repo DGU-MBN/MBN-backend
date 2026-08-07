@@ -4,14 +4,20 @@ import com.hackathon.MBN.domain.Event;
 import com.hackathon.MBN.domain.EventLocation;
 import com.hackathon.MBN.domain.RawArticle;
 import com.hackathon.MBN.domain.Short;
+import com.hackathon.MBN.domain.type.Confidence;
+import com.hackathon.MBN.domain.type.EventStatus;
 import com.hackathon.MBN.domain.type.LocationPrecision;
 import com.hackathon.MBN.domain.type.NewsCategory;
 import com.hackathon.MBN.domain.type.PinType;
+import com.hackathon.MBN.domain.type.SourceType;
 import com.hackathon.MBN.repository.EventLocationRepository;
 import com.hackathon.MBN.repository.EventRepository;
 import com.hackathon.MBN.repository.RawArticleRepository;
 import com.hackathon.MBN.repository.ShortRepository;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
+import java.util.Set;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,6 +33,14 @@ public class EventExtractionService {
             new TargetLanguage("en", "English"),
             new TargetLanguage("zh", "Chinese"),
             new TargetLanguage("ja", "Japanese"));
+
+    // 뉴스(NEWS_RSS)만 신뢰 소스로 취급. 블로그/카페/유튜브는 검증 전까지 미공개.
+    private static final Set<SourceType> LOW_TRUST_SOURCE_TYPES =
+            Set.of(SourceType.NAVER_BLOG, SourceType.NAVER_CAFE, SourceType.YOUTUBE_OFFICIAL);
+    private static final String REVIEW_REASON_UNVERIFIED_SOURCE = "unverified_source_pending_review";
+    private static final Duration CORROBORATION_WINDOW = Duration.ofHours(72);
+    private static final String BYLINE_NEWS = "뉴스";
+    private static final String BYLINE_AI_REPORTER = "AI기자";
 
     private final RawArticleRepository rawArticles;
     private final EventRepository events;
@@ -64,18 +78,30 @@ public class EventExtractionService {
                     skipped++;
                     continue;
                 }
-                Event event = events.save(Event.builder()
+                String category = normalizeCategory(extraction.category());
+                boolean lowTrust = LOW_TRUST_SOURCE_TYPES.contains(article.getSource().getSourceType());
+                String evidence = lowTrust
+                        ? withCorroborationNote(extraction.evidence(), category, extraction.locationName(), article.getPublishedAt())
+                        : extraction.evidence();
+
+                var eventBuilder = Event.builder()
                         .sourceArticle(article)
                         .pinType(PinType.ORIGIN)
-                        .category(normalizeCategory(extraction.category()))
+                        .category(category)
                         .title(truncate(extraction.eventTitle(), 500))
                         .locationName(extraction.locationName())
                         .adminArea(extraction.adminArea())
                         .summary(extractedBodyOrRawText(extraction, article))
-                        .evidence(extraction.evidence())
+                        .evidence(evidence)
                         .aiConfidence(extraction.confidence())
                         .publishedAt(article.getPublishedAt())
-                        .build());
+                        .byline(lowTrust ? BYLINE_AI_REPORTER : BYLINE_NEWS);
+                if (lowTrust) {
+                    eventBuilder.status(EventStatus.PENDING_REVIEW)
+                            .confidence(Confidence.UNVERIFIED)
+                            .reviewReason(REVIEW_REASON_UNVERIFIED_SOURCE);
+                }
+                Event event = events.save(eventBuilder.build());
                 if (extraction.lat() != null && extraction.lng() != null) {
                     eventLocations.save(EventLocation.builder()
                             .event(event)
@@ -88,7 +114,9 @@ public class EventExtractionService {
                             .build());
                 }
                 created++;
-                localizeAndSave(event);
+                if (!lowTrust) {
+                    localizeAndSave(event);
+                }
             } catch (Exception ex) {
                 skipped++;
             }
@@ -121,6 +149,21 @@ public class EventExtractionService {
 
     private static String extractedBodyOrRawText(ArticleExtraction extraction, RawArticle article) {
         return StringUtils.hasText(extraction.body()) ? extraction.body() : fullTextOrSnippet(article);
+    }
+
+    // 저신뢰 소스 이벤트가 이미 검증된 뉴스와 같은 사건이면 evidence에 교차검증 메모를 덧붙인다.
+    // publishedAt이 없는 소스(네이버 카페 등)는 시간 윈도우를 계산할 수 없어 교차검증을 건너뛴다.
+    private String withCorroborationNote(String evidence, String category, String locationName, Instant publishedAt) {
+        if (publishedAt == null) {
+            return evidence;
+        }
+        List<Event> corroborating = events.findTrustedCorroboration(
+                category, locationName, publishedAt.minus(CORROBORATION_WINDOW), publishedAt.plus(CORROBORATION_WINDOW));
+        if (corroborating.isEmpty()) {
+            return evidence;
+        }
+        String note = "[교차검증됨: 이벤트 #" + corroborating.get(0).getId() + "]";
+        return StringUtils.hasText(evidence) ? evidence + " " + note : note;
     }
 
     private static String normalizeCategory(String raw) {

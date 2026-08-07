@@ -108,6 +108,7 @@ public class FeedController {
         item.put("location", location != null ? location.getLocationName() : null);
         item.put("country", location != null ? location.getCountry() : null);
         item.put("language", representative != null ? representative.getLang() : null);
+        item.put("byline", event.getByline());
         return item;
     }
 
@@ -131,6 +132,7 @@ public class FeedController {
         response.put("status", event.getStatus().name());
         response.put("confidence", event.getConfidence().name());
         response.put("reviewReason", event.getReviewReason());
+        response.put("byline", event.getByline());
         response.put("programName", event.getProgramName());
         response.put("publishedAt", event.getPublishedAt());
         response.put("popularity", event.getPopularity());
