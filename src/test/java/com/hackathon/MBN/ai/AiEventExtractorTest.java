@@ -20,7 +20,6 @@ class AiEventExtractorTest {
                   "lat": 37.5006,
                   "lng": 127.0365,
                   "location_precision": "VENUE",
-                  "body": "기사 본문 전문",
                   "category": "사고재난",
                   "confidence": "HIGH",
                   "evidence": "역삼동의 한 오피스텔 3층에서 화재가 발생했다"
@@ -35,7 +34,8 @@ class AiEventExtractorTest {
         assertThat(extraction.lat()).isEqualTo(37.5006);
         assertThat(extraction.lng()).isEqualTo(127.0365);
         assertThat(extraction.locationPrecision()).isEqualTo(LocationPrecision.VENUE);
-        assertThat(extraction.body()).isEqualTo("기사 본문 전문");
+        // body는 AI가 만들지 않는다 — DB의 RawArticle.content를 그대로 쓴다
+        assertThat(extraction.body()).isNull();
         assertThat(extraction.category()).isEqualTo("사고재난");
         assertThat(extraction.confidence()).isEqualTo(AiConfidence.HIGH);
         assertThat(extraction.evidence()).isEqualTo("역삼동의 한 오피스텔 3층에서 화재가 발생했다");
