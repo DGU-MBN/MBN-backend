@@ -1,11 +1,14 @@
 package com.hackathon.MBN.config;
 
-import com.hackathon.MBN.web.CurrentUserArgumentResolver;
 import java.util.List;
-import lombok.RequiredArgsConstructor;
+
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
+import com.hackathon.MBN.web.CurrentUserArgumentResolver;
+
+import lombok.RequiredArgsConstructor;
 
 @Configuration
 @RequiredArgsConstructor

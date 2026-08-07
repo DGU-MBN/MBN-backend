@@ -1,18 +1,19 @@
 package com.hackathon.MBN.web;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
-import com.hackathon.MBN.domain.User;
-import com.hackathon.MBN.repository.UserRepository;
 import java.lang.reflect.Method;
 import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.Test;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import org.springframework.core.MethodParameter;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.web.context.request.ServletWebRequest;
+
+import com.hackathon.MBN.domain.User;
+import com.hackathon.MBN.repository.UserRepository;
 
 class CurrentUserArgumentResolverTest {
 
