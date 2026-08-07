@@ -1,5 +1,6 @@
 package com.hackathon.MBN.domain;
 
+import com.hackathon.MBN.domain.type.AiConfidence;
 import com.hackathon.MBN.domain.type.Confidence;
 import com.hackathon.MBN.domain.type.EventStatus;
 import com.hackathon.MBN.domain.type.PinType;
@@ -24,6 +25,11 @@ public class Event {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    /** AI 추출 흐름에서 어떤 RawArticle로부터 만들어졌는지. 클러스터링 도입 전까지는 기사 1개당 Event 1개 */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "raw_article_id", unique = true)
+    private RawArticle sourceArticle;
+
     @Column(nullable = false)
     private String category;
 
@@ -46,6 +52,19 @@ public class Event {
 
     /** pending_review일 때만 채움: license_unreviewed / fact_conflict 등 */
     private String reviewReason;
+
+    // AI 지역/카테고리 추출 결과. 지오코딩 전이라 EventLocation 대신 여기 임시 보관
+    private String locationName;
+    private String adminArea;
+
+    @Lob
+    private String summary;
+
+    @Lob
+    private String evidence;
+
+    @Enumerated(EnumType.STRING)
+    private AiConfidence aiConfidence;
 
     // pinType == BROADCAST 일 때만 사용
     private String programName;
