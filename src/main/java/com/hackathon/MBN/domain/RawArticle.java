@@ -37,6 +37,10 @@ public class RawArticle {
     @Lob
     private String description;
 
+    /** 원문 URL에서 크롤링한 본문 전문. 크롤링 실패하면 null (description 스니펫으로 폴백) */
+    @Lob
+    private String content;
+
     private Instant publishedAt;
 
     private Instant lastSeenAt;

@@ -2,13 +2,16 @@ package com.hackathon.MBN.ai;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.hackathon.MBN.domain.Event;
 import com.hackathon.MBN.domain.EventLocation;
 import com.hackathon.MBN.domain.RawArticle;
+import com.hackathon.MBN.domain.Short;
 import com.hackathon.MBN.domain.Source;
 import com.hackathon.MBN.domain.type.AiConfidence;
 import com.hackathon.MBN.domain.type.LocationPrecision;
@@ -16,6 +19,7 @@ import com.hackathon.MBN.domain.type.SourceType;
 import com.hackathon.MBN.repository.EventLocationRepository;
 import com.hackathon.MBN.repository.EventRepository;
 import com.hackathon.MBN.repository.RawArticleRepository;
+import com.hackathon.MBN.repository.ShortRepository;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -37,7 +41,13 @@ class EventExtractionServiceTest {
     EventLocationRepository eventLocations;
 
     @Mock
+    ShortRepository shorts;
+
+    @Mock
     AiEventExtractor extractor;
+
+    @Mock
+    AiLocalizer localizer;
 
     private RawArticle article(long id, String title) {
         Source source = Source.builder().sourceType(SourceType.NEWS_RSS).name("Naver News")
@@ -63,7 +73,7 @@ class EventExtractionServiceTest {
         when(extractor.extract(article)).thenReturn(new ArticleExtraction(
                 "제목", null, null, null, null, null, "사회", AiConfidence.LOW, "근거"));
 
-        var result = new EventExtractionService(rawArticles, events, eventLocations, extractor).extractEvents(10);
+        var result = new EventExtractionService(rawArticles, events, eventLocations, shorts, extractor, localizer).extractEvents(10);
 
         assertThat(result.processed()).isEqualTo(1);
         assertThat(result.created()).isEqualTo(0);
@@ -80,7 +90,7 @@ class EventExtractionServiceTest {
                 "강남 오피스텔 화재", "서울 강남구 역삼동", "서울특별시 강남구", null, null, null,
                 "사회", AiConfidence.HIGH, "근거 문장"));
 
-        var result = new EventExtractionService(rawArticles, events, eventLocations, extractor).extractEvents(10);
+        var result = new EventExtractionService(rawArticles, events, eventLocations, shorts, extractor, localizer).extractEvents(10);
 
         assertThat(result.processed()).isEqualTo(1);
         assertThat(result.created()).isEqualTo(1);
@@ -109,7 +119,7 @@ class EventExtractionServiceTest {
                 "강남 오피스텔 화재", "서울 강남구 역삼동", "서울특별시 강남구", 37.5006, 127.0365, LocationPrecision.VENUE,
                 "사회", AiConfidence.HIGH, "근거 문장"));
 
-        new EventExtractionService(rawArticles, events, eventLocations, extractor).extractEvents(10);
+        new EventExtractionService(rawArticles, events, eventLocations, shorts, extractor, localizer).extractEvents(10);
 
         ArgumentCaptor<EventLocation> captor = ArgumentCaptor.forClass(EventLocation.class);
         verify(eventLocations).save(captor.capture());
@@ -129,7 +139,7 @@ class EventExtractionServiceTest {
                 "부산 축제", "부산", "부산광역시", 35.1796, 129.0756, null,
                 "문화", AiConfidence.MEDIUM, "근거"));
 
-        new EventExtractionService(rawArticles, events, eventLocations, extractor).extractEvents(10);
+        new EventExtractionService(rawArticles, events, eventLocations, shorts, extractor, localizer).extractEvents(10);
 
         ArgumentCaptor<EventLocation> captor = ArgumentCaptor.forClass(EventLocation.class);
         verify(eventLocations).save(captor.capture());
@@ -144,11 +154,45 @@ class EventExtractionServiceTest {
         when(extractor.extract(article)).thenReturn(new ArticleExtraction(
                 "제목", "서울", "서울", null, null, null, "존재하지않는카테고리", AiConfidence.LOW, "근거"));
 
-        new EventExtractionService(rawArticles, events, eventLocations, extractor).extractEvents(10);
+        new EventExtractionService(rawArticles, events, eventLocations, shorts, extractor, localizer).extractEvents(10);
 
         ArgumentCaptor<Event> captor = ArgumentCaptor.forClass(Event.class);
         verify(events).save(captor.capture());
         assertThat(captor.getValue().getCategory()).isEqualTo("사회");
+    }
+
+    @Test
+    void localizesIntoThreeLanguagesAfterEventCreated() {
+        RawArticle article = article(8, "부산 축제");
+        stubSaveReturnsArgument();
+        when(rawArticles.findUnprocessed(any(Pageable.class))).thenReturn(List.of(article));
+        when(extractor.extract(article)).thenReturn(new ArticleExtraction(
+                "부산 축제 개막", "부산", "부산광역시", null, null, null, "문화행사", AiConfidence.MEDIUM, "근거"));
+        when(localizer.localize(any(Event.class), any(String.class)))
+                .thenAnswer(invocation -> new LocalizedContent("Title in " + invocation.getArgument(1), "Summary"));
+
+        new EventExtractionService(rawArticles, events, eventLocations, shorts, extractor, localizer).extractEvents(10);
+
+        ArgumentCaptor<Short> captor = ArgumentCaptor.forClass(Short.class);
+        verify(shorts, times(3)).save(captor.capture());
+        assertThat(captor.getAllValues()).extracting(Short::getLang).containsExactlyInAnyOrder("en", "zh", "ja");
+    }
+
+    @Test
+    void skipsOnlyFailingLanguageLocalization() {
+        RawArticle article = article(9, "부산 축제");
+        stubSaveReturnsArgument();
+        when(rawArticles.findUnprocessed(any(Pageable.class))).thenReturn(List.of(article));
+        when(extractor.extract(article)).thenReturn(new ArticleExtraction(
+                "부산 축제 개막", "부산", "부산광역시", null, null, null, "문화행사", AiConfidence.MEDIUM, "근거"));
+        when(localizer.localize(any(Event.class), eq("English"))).thenThrow(new IllegalArgumentException("실패"));
+        when(localizer.localize(any(Event.class), eq("Chinese"))).thenReturn(new LocalizedContent("中文标题", "中文摘要"));
+        when(localizer.localize(any(Event.class), eq("Japanese"))).thenReturn(new LocalizedContent("日本語タイトル", "日本語要約"));
+
+        var result = new EventExtractionService(rawArticles, events, eventLocations, shorts, extractor, localizer).extractEvents(10);
+
+        assertThat(result.created()).isEqualTo(1);
+        verify(shorts, times(2)).save(any());
     }
 
     @Test
@@ -161,7 +205,7 @@ class EventExtractionServiceTest {
         when(extractor.extract(succeeding)).thenReturn(new ArticleExtraction(
                 "성공 이벤트", "부산", "부산광역시", null, null, null, "경제", AiConfidence.MEDIUM, "근거"));
 
-        var result = new EventExtractionService(rawArticles, events, eventLocations, extractor).extractEvents(10);
+        var result = new EventExtractionService(rawArticles, events, eventLocations, shorts, extractor, localizer).extractEvents(10);
 
         assertThat(result.processed()).isEqualTo(2);
         assertThat(result.created()).isEqualTo(1);

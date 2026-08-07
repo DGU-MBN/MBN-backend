@@ -3,6 +3,7 @@ package com.hackathon.MBN.ai;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.hackathon.MBN.domain.RawArticle;
 import com.hackathon.MBN.domain.type.AiConfidence;
 import com.hackathon.MBN.domain.type.LocationPrecision;
 import org.junit.jupiter.api.Test;
@@ -19,6 +20,7 @@ class AiEventExtractorTest {
                   "lat": 37.5006,
                   "lng": 127.0365,
                   "location_precision": "VENUE",
+                  "body": "기사 본문 전문",
                   "category": "사고재난",
                   "confidence": "HIGH",
                   "evidence": "역삼동의 한 오피스텔 3층에서 화재가 발생했다"
@@ -33,9 +35,24 @@ class AiEventExtractorTest {
         assertThat(extraction.lat()).isEqualTo(37.5006);
         assertThat(extraction.lng()).isEqualTo(127.0365);
         assertThat(extraction.locationPrecision()).isEqualTo(LocationPrecision.VENUE);
+        assertThat(extraction.body()).isEqualTo("기사 본문 전문");
         assertThat(extraction.category()).isEqualTo("사고재난");
         assertThat(extraction.confidence()).isEqualTo(AiConfidence.HIGH);
         assertThat(extraction.evidence()).isEqualTo("역삼동의 한 오피스텔 3층에서 화재가 발생했다");
+    }
+
+    @Test
+    void buildUserContentUsesCrawledArticleBodyBeforeDescription() {
+        RawArticle article = RawArticle.builder()
+                .title("제목")
+                .description("검색 스니펫")
+                .content("크롤링된 뉴스 전문")
+                .build();
+
+        String userContent = AiEventExtractor.buildUserContent(article);
+
+        assertThat(userContent).contains("본문: 크롤링된 뉴스 전문");
+        assertThat(userContent).doesNotContain("검색 스니펫");
     }
 
     @Test

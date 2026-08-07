@@ -11,4 +11,6 @@ public interface ShortRepository extends JpaRepository<Short, Long> {
     Optional<Short> findFirstByEventIdAndLang(Long eventId, String lang);
 
     Optional<Short> findFirstByEventId(Long eventId);
+
+    List<Short> findByLangOrderByIdDesc(String lang);
 }

@@ -25,7 +25,8 @@ import tools.jackson.databind.ObjectMapper;
 public class AiEventExtractor {
 
     static final String API_BASE_URL = "https://api.openai.com";
-    static final String CHAT_COMPLETIONS_PATH = "/v1/chat/completions";
+    static final String
+            CHAT_COMPLETIONS_PATH = "/v1/chat/completions";
 
     /** 카테고리는 NewsCategory enum이 유일한 출처. 여기에 넣으면 프롬프트에 자동 반영된다. */
     private static final String CATEGORY_LIST = Arrays.stream(NewsCategory.values())
@@ -47,6 +48,7 @@ public class AiEventExtractor {
               "lat": "location_name의 위도 (숫자). 특정할 수 없으면 null",
               "lng": "location_name의 경도 (숫자). 특정할 수 없으면 null",
               "location_precision": "VENUE | CITY | COUNTRY 중 하나 (장소를 특정할 수 없으면 null)",
+              "body" : "전달받은 뉴스 전문",
               "category": "위 카테고리 중 하나",
               "confidence": "HIGH | MEDIUM | LOW",
               "evidence": "이렇게 판단한 근거가 되는 기사 속 문장 또는 표현"
@@ -72,7 +74,7 @@ public class AiEventExtractor {
         if (!StringUtils.hasText(apiKey)) {
             throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "OPENAI_CONFIG_MISSING", "OpenAI API key is missing");
         }
-        String userContent = "제목: " + article.getTitle() + "\n본문: " + emptyIfNull(article.getDescription());
+        String userContent = buildUserContent(article);
         Map<String, Object> body = Map.of(
                 "model", model,
                 "temperature", 0,
@@ -139,7 +141,12 @@ public class AiEventExtractor {
                 locationPrecisionOrNull(root),
                 category,
                 confidence,
-                textOrNull(root, "evidence"));
+                textOrNull(root, "evidence"),
+                textOrNull(root, "body"));
+    }
+
+    static String buildUserContent(RawArticle article) {
+        return "제목: " + article.getTitle() + "\n본문: " + articleText(article);
     }
 
     private static String textOrNull(JsonNode root, String field) {
@@ -166,5 +173,9 @@ public class AiEventExtractor {
 
     private static String emptyIfNull(String value) {
         return value == null ? "" : value;
+    }
+
+    private static String articleText(RawArticle article) {
+        return StringUtils.hasText(article.getContent()) ? article.getContent() : emptyIfNull(article.getDescription());
     }
 }
