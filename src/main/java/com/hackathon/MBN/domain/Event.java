@@ -37,6 +37,11 @@ public class Event {
     @Column(nullable = false)
     private PinType pinType;
 
+    /** 기능명세서 07/10의 artistId 필터·검색을 위한 연관관계. 클러스터링 단계(A)에서 채워짐. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "artist_id")
+    private Artist artist;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @Builder.Default
