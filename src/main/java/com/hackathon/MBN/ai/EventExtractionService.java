@@ -1,6 +1,7 @@
 package com.hackathon.MBN.ai;
 
 import com.hackathon.MBN.domain.Event;
+import com.hackathon.MBN.domain.EventEntity;
 import com.hackathon.MBN.domain.EventLocation;
 import com.hackathon.MBN.domain.RawArticle;
 import com.hackathon.MBN.domain.Short;
@@ -10,6 +11,7 @@ import com.hackathon.MBN.domain.type.LocationPrecision;
 import com.hackathon.MBN.domain.type.NewsCategory;
 import com.hackathon.MBN.domain.type.PinType;
 import com.hackathon.MBN.domain.type.SourceType;
+import com.hackathon.MBN.repository.EventEntityRepository;
 import com.hackathon.MBN.repository.EventLocationRepository;
 import com.hackathon.MBN.repository.EventRepository;
 import com.hackathon.MBN.repository.RawArticleRepository;
@@ -46,22 +48,28 @@ public class EventExtractionService {
     private final EventRepository events;
     private final EventLocationRepository eventLocations;
     private final ShortRepository shorts;
+    private final EventEntityRepository eventEntities;
     private final AiEventExtractor extractor;
     private final AiLocalizer localizer;
+    private final AiFactVerifier factVerifier;
 
     public EventExtractionService(
             RawArticleRepository rawArticles,
             EventRepository events,
             EventLocationRepository eventLocations,
             ShortRepository shorts,
+            EventEntityRepository eventEntities,
             AiEventExtractor extractor,
-            AiLocalizer localizer) {
+            AiLocalizer localizer,
+            AiFactVerifier factVerifier) {
         this.rawArticles = rawArticles;
         this.events = events;
         this.eventLocations = eventLocations;
         this.shorts = shorts;
+        this.eventEntities = eventEntities;
         this.extractor = extractor;
         this.localizer = localizer;
+        this.factVerifier = factVerifier;
     }
 
     @Transactional
@@ -114,6 +122,7 @@ public class EventExtractionService {
                             .build());
                 }
                 created++;
+                verifyAndSave(event, article);
                 if (!lowTrust) {
                     localizeAndSave(event);
                 }
@@ -123,6 +132,29 @@ public class EventExtractionService {
         }
 
         return new EventExtractionResult(unprocessed.size(), created, skipped);
+    }
+
+    // 1차 추출 결과를 원문과 대조하는 별도 감사(audit) 호출. 실패해도 이벤트 생성 자체는 이미 끝난 뒤라 영향 없음
+    private void verifyAndSave(Event event, RawArticle article) {
+        try {
+            List<VerifiedFact> facts = factVerifier.verify(article, event);
+            if (facts.isEmpty()) {
+                return;
+            }
+            for (VerifiedFact fact : facts) {
+                eventEntities.save(EventEntity.builder()
+                        .event(event)
+                        .rawArticle(article)
+                        .factText(fact.factText())
+                        .verified(fact.verified())
+                        .build());
+            }
+            boolean allVerified = facts.stream().allMatch(VerifiedFact::verified);
+            event.setConfidence(allVerified ? Confidence.VERIFIED : Confidence.DISPUTED);
+            events.save(event);
+        } catch (Exception ignored) {
+            // 검증 실패해도 이벤트는 이미 생성됨, confidence는 기본값(UNVERIFIED) 유지
+        }
     }
 
     // 언어별로 별도 호출 — 번역이 아니라 그 언어 기자가 새로 쓴 것처럼 재작성. 한 언어 실패해도 나머지는 계속
