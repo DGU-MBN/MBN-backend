@@ -43,6 +43,9 @@ public class Short {
     @Column(nullable = false, length = 500)
     private String title;
 
+    @Lob
+    private String body;
+
     @Column(length = 1000)
     private String thumbnailUrl;
 
