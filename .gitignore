@@ -12,6 +12,10 @@ build/
 application-local.yaml
 application-local.yml
 
+# 시연용 숏폼 영상. MBN 캐릭터(므브니)가 등장해 공개 레포에 올리지 않는다.
+# AI 파트가 로컬에서 생성해 넣는 파일이라 레포로 관리하지 않음.
+src/main/resources/static/shorts/
+
 
 ### STS ###
 .apt_generated
