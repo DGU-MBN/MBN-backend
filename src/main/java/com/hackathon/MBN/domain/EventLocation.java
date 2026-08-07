@@ -32,7 +32,7 @@ public class EventLocation {
     private double lng;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(name = "location_precision", nullable = false)
     private LocationPrecision precision;
 
     @Column(nullable = false)
