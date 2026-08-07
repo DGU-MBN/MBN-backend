@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import org.junit.jupiter.api.Test;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -42,20 +43,21 @@ class FeedControllerTest {
         Event event = Event.builder().id(1L).title("Sample event").category("KPOP").pinType(PinType.ORIGIN).build();
         Short shortItem = Short.builder().id(10L).event(event).title("Sample short").lang("en").videoUrl("https://cdn/1.mp4").build();
         EventLocation location = EventLocation.builder().id(1L).event(event).lat(48.8).lng(2.3)
-                .precision(LocationPrecision.CITY).locationName("Paris").primary(true).build();
+                .precision(LocationPrecision.CITY).locationName("Paris").country("France").primary(true).build();
 
-        when(eventRepository.findFeedCandidates(isNull(), isNull(), isNull(), isNull(), isNull(), any()))
+        when(eventRepository.findFeedCandidates(isNull(), isNull(), isNull(), isNull(), isNull(), anyBoolean(), any()))
                 .thenReturn(List.of(event));
         when(shortRepository.findFirstByEventId(1L)).thenReturn(Optional.of(shortItem));
         when(eventLocationRepository.findFirstByEventIdAndPrimaryTrue(1L)).thenReturn(Optional.of(location));
 
         FeedController controller = new FeedController(eventRepository, shortRepository, eventEntityRepository, eventLocationRepository);
-        Map<String, Object> feed = controller.getFeed(null, null, null, null, null, null);
+        Map<String, Object> feed = controller.getFeed(null, null, null, null, null, null, null);
 
         @SuppressWarnings("unchecked")
         List<Map<String, Object>> items = (List<Map<String, Object>>) feed.get("items");
         assertEquals(1, items.size());
         assertEquals("Paris", items.get(0).get("location"));
+        assertEquals("France", items.get(0).get("country"));
         assertEquals("https://cdn/1.mp4", items.get(0).get("videoUrl"));
     }
 
@@ -92,6 +94,22 @@ class FeedControllerTest {
         List<Map<String, Object>> sources = (List<Map<String, Object>>) detail.get("sources");
         assertEquals(1, sources.size());
         assertEquals("Yonhap", sources.get(0).get("publisher"));
+    }
+
+    @Test
+    void popularSortRequestsPopularityOrdering() {
+        EventRepository eventRepository = mock(EventRepository.class);
+        ShortRepository shortRepository = mock(ShortRepository.class);
+        EventEntityRepository eventEntityRepository = mock(EventEntityRepository.class);
+        EventLocationRepository eventLocationRepository = mock(EventLocationRepository.class);
+
+        when(eventRepository.findFeedCandidates(isNull(), isNull(), isNull(), isNull(), isNull(), org.mockito.ArgumentMatchers.eq(true), any()))
+                .thenReturn(List.of());
+
+        FeedController controller = new FeedController(eventRepository, shortRepository, eventEntityRepository, eventLocationRepository);
+        Map<String, Object> feed = controller.getFeed(null, null, null, null, null, null, "popular");
+
+        assertEquals(List.of(), feed.get("items"));
     }
 
     @Test

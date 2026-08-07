@@ -47,13 +47,15 @@ public class FeedController {
             @RequestParam(required = false) Long artistId,
             @RequestParam(required = false) String country,
             @RequestParam(required = false) String language,
-            @RequestParam(required = false) Integer limit) {
+            @RequestParam(required = false) Integer limit,
+            @RequestParam(required = false) String sort) {
 
         Long cursorId = (cursor != null && !cursor.isBlank()) ? Long.valueOf(cursor) : null;
         int pageSize = (limit == null || limit <= 0) ? DEFAULT_LIMIT : limit;
         Pageable pageable = PageRequest.of(0, pageSize);
+        boolean popular = "popular".equalsIgnoreCase(sort);
 
-        List<Event> events = eventRepository.findFeedCandidates(cursorId, category, artistId, country, language, pageable);
+        List<Event> events = eventRepository.findFeedCandidates(cursorId, category, artistId, country, language, popular, pageable);
 
         Map<String, Object> response = new LinkedHashMap<>();
         response.put("items", events.stream().map(e -> toFeedItem(e, language)).collect(Collectors.toList()));
@@ -104,6 +106,7 @@ public class FeedController {
         item.put("category", event.getCategory());
         item.put("videoUrl", representative != null ? representative.getVideoUrl() : null);
         item.put("location", location != null ? location.getLocationName() : null);
+        item.put("country", location != null ? location.getCountry() : null);
         item.put("language", representative != null ? representative.getLang() : null);
         return item;
     }
