@@ -61,7 +61,7 @@ class EventExtractionServiceTest {
         RawArticle article = article(1, "제목");
         when(rawArticles.findUnprocessed(any(Pageable.class))).thenReturn(List.of(article));
         when(extractor.extract(article)).thenReturn(new ArticleExtraction(
-                "제목", null, null, null, null, null, "사회일반", AiConfidence.LOW, "근거"));
+                "제목", null, null, null, null, null, "사회", AiConfidence.LOW, "근거"));
 
         var result = new EventExtractionService(rawArticles, events, eventLocations, extractor).extractEvents(10);
 
@@ -78,7 +78,7 @@ class EventExtractionServiceTest {
         when(rawArticles.findUnprocessed(any(Pageable.class))).thenReturn(List.of(article));
         when(extractor.extract(article)).thenReturn(new ArticleExtraction(
                 "강남 오피스텔 화재", "서울 강남구 역삼동", "서울특별시 강남구", null, null, null,
-                "사회일반", AiConfidence.HIGH, "근거 문장"));
+                "사회", AiConfidence.HIGH, "근거 문장"));
 
         var result = new EventExtractionService(rawArticles, events, eventLocations, extractor).extractEvents(10);
 
@@ -94,7 +94,7 @@ class EventExtractionServiceTest {
         assertThat(saved.getLocationName()).isEqualTo("서울 강남구 역삼동");
         assertThat(saved.getAdminArea()).isEqualTo("서울특별시 강남구");
         assertThat(saved.getSummary()).isEqualTo(article.getDescription());
-        assertThat(saved.getCategory()).isEqualTo("사회일반");
+        assertThat(saved.getCategory()).isEqualTo("사회");
         assertThat(saved.getAiConfidence()).isEqualTo(AiConfidence.HIGH);
         assertThat(saved.getEvidence()).isEqualTo("근거 문장");
         verify(eventLocations, never()).save(any());
@@ -107,7 +107,7 @@ class EventExtractionServiceTest {
         when(rawArticles.findUnprocessed(any(Pageable.class))).thenReturn(List.of(article));
         when(extractor.extract(article)).thenReturn(new ArticleExtraction(
                 "강남 오피스텔 화재", "서울 강남구 역삼동", "서울특별시 강남구", 37.5006, 127.0365, LocationPrecision.VENUE,
-                "사회일반", AiConfidence.HIGH, "근거 문장"));
+                "사회", AiConfidence.HIGH, "근거 문장"));
 
         new EventExtractionService(rawArticles, events, eventLocations, extractor).extractEvents(10);
 
@@ -127,7 +127,7 @@ class EventExtractionServiceTest {
         when(rawArticles.findUnprocessed(any(Pageable.class))).thenReturn(List.of(article));
         when(extractor.extract(article)).thenReturn(new ArticleExtraction(
                 "부산 축제", "부산", "부산광역시", 35.1796, 129.0756, null,
-                "문화행사", AiConfidence.MEDIUM, "근거"));
+                "문화", AiConfidence.MEDIUM, "근거"));
 
         new EventExtractionService(rawArticles, events, eventLocations, extractor).extractEvents(10);
 
@@ -148,7 +148,7 @@ class EventExtractionServiceTest {
 
         ArgumentCaptor<Event> captor = ArgumentCaptor.forClass(Event.class);
         verify(events).save(captor.capture());
-        assertThat(captor.getValue().getCategory()).isEqualTo("사회일반");
+        assertThat(captor.getValue().getCategory()).isEqualTo("사회");
     }
 
     @Test
@@ -159,7 +159,7 @@ class EventExtractionServiceTest {
         when(rawArticles.findUnprocessed(any(Pageable.class))).thenReturn(List.of(failing, succeeding));
         when(extractor.extract(failing)).thenThrow(new IllegalArgumentException("AI 파싱 실패"));
         when(extractor.extract(succeeding)).thenReturn(new ArticleExtraction(
-                "성공 이벤트", "부산", "부산광역시", null, null, null, "경제산업", AiConfidence.MEDIUM, "근거"));
+                "성공 이벤트", "부산", "부산광역시", null, null, null, "경제", AiConfidence.MEDIUM, "근거"));
 
         var result = new EventExtractionService(rawArticles, events, eventLocations, extractor).extractEvents(10);
 

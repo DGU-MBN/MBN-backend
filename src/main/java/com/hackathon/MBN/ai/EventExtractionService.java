@@ -85,10 +85,10 @@ public class EventExtractionService {
             try {
                 return NewsCategory.valueOf(raw.trim()).name();
             } catch (IllegalArgumentException ignored) {
-                // 알 수 없는 카테고리는 사회일반으로 폴백 (기타 카테고리 없음)
+                // 알 수 없는 카테고리는 사회로 폴백 (기타 카테고리 없음)
             }
         }
-        return NewsCategory.사회일반.name();
+        return NewsCategory.사회.name();
     }
 
     private static String truncate(String value, int maxLength) {

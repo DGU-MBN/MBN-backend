@@ -3,10 +3,13 @@ package com.hackathon.MBN.ai;
 import com.hackathon.MBN.domain.RawArticle;
 import com.hackathon.MBN.domain.type.AiConfidence;
 import com.hackathon.MBN.domain.type.LocationPrecision;
+import com.hackathon.MBN.domain.type.NewsCategory;
 import com.hackathon.MBN.web.ApiException;
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -24,13 +27,19 @@ public class AiEventExtractor {
     static final String API_BASE_URL = "https://api.openai.com";
     static final String CHAT_COMPLETIONS_PATH = "/v1/chat/completions";
 
+    /** 카테고리는 NewsCategory enum이 유일한 출처. 여기에 넣으면 프롬프트에 자동 반영된다. */
+    private static final String CATEGORY_LIST = Arrays.stream(NewsCategory.values())
+            .map(Enum::name)
+            .collect(Collectors.joining(", "));
+
     static final String SYSTEM_PROMPT = """
             너는 뉴스 기사에서 지도 표시용 사건 정보를 추출하는 엔진이다.
             기사 제목과 본문을 읽고 아래 JSON 스키마로만 응답한다. 설명, 코드블록, 다른 텍스트는 절대 포함하지 않는다.
 
-            카테고리는 반드시 다음 중 하나여야 한다: 정치행정, 경제산업, 사회일반, 문화행사, 스포츠연예, 보건복지
+            카테고리는 반드시 다음 중 하나여야 한다: %s
 
-            응답 JSON 형식:
+            응답 JSON 형식:""".formatted(CATEGORY_LIST) + """
+
             {
               "event_title": "사건을 한 문장으로 요약한 제목",
               "location_name": "사건이 발생한 구체적 장소명 (예: 서울 강남구 역삼동). 특정할 수 없으면 null",

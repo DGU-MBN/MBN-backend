@@ -18,6 +18,8 @@ spring:
         # 엔티티가 늘어날 때마다 예약어를 따로 찾아다니지 않기 위함.
         auto_quote_keyword: true
 
+# 실제 키는 절대 여기(git 추적 파일) 넣지 말 것.
+# gitignore된 application-local.yaml에 NAVER_CLIENT_ID 등으로 넣으면 아래 ${}가 읽어온다.
 naver:
   client-id: ${NAVER_CLIENT_ID:}
   client-secret: ${NAVER_CLIENT_SECRET:}
@@ -25,3 +27,6 @@ naver:
 openai:
   api-key: ${OPENAI_API_KEY:}
   model: ${OPENAI_MODEL:gpt-4o-mini}
+
+youtube:
+  api-key: ${YOUTUBE_API_KEY:}

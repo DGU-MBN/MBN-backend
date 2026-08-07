@@ -1,5 +1,6 @@
 package com.hackathon.MBN.news;
 
+import com.hackathon.MBN.domain.type.NewsCategory;
 import com.hackathon.MBN.web.ApiException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -26,5 +27,21 @@ public class AdminIngestController {
         }
         int safeDisplay = Math.min(Math.max(display, 1), 100);
         return newsIngestService.ingest(query, safeDisplay);
+    }
+
+    /** 카테고리(정치, 경제, 식품, 의료 등)의 대표 검색어들로 뉴스를 수집한다. */
+    @PostMapping("/ingest/category")
+    public NewsIngestResult ingestByCategory(
+            @RequestParam String category,
+            @RequestParam(defaultValue = "10") int display) {
+        NewsCategory parsed;
+        try {
+            parsed = NewsCategory.valueOf(category.trim());
+        } catch (IllegalArgumentException ex) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "INVALID_CATEGORY",
+                    "Unknown category: " + category);
+        }
+        int safeDisplay = Math.min(Math.max(display, 1), 100);
+        return newsIngestService.ingestByCategory(parsed, safeDisplay);
     }
 }
