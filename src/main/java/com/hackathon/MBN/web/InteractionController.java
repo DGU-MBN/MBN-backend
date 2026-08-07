@@ -20,7 +20,7 @@ import com.hackathon.MBN.repository.ShortRepository;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping
+@RequestMapping("/api")
 @RequiredArgsConstructor
 public class InteractionController {
 

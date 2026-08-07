@@ -1,6 +1,9 @@
 package com.hackathon.MBN.web;
 
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,9 +19,12 @@ import com.hackathon.MBN.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping
+@RequestMapping("/api")
 @RequiredArgsConstructor
 public class AuthController {
+
+    /** 기능명세서 01: 지원하지 않는 언어는 영어로 대체 */
+    private static final Set<String> SUPPORTED_LANGUAGES = Set.of("ko", "en", "ja", "zh");
 
     private final UserRepository userRepository;
 
@@ -31,39 +37,48 @@ public class AuthController {
 
     @GetMapping("/me/preferences")
     public Map<String, Object> getPreferences(@CurrentUser User user) {
-        return Map.of(
-                "preferredLang", user.getPreferredLang(),
-                "pinTypeFilter", user.getPinTypeFilter(),
-                "interestedArtistIds", user.getInterestedArtistIds(),
-                "interestedCategories", user.getInterestedCategories());
+        return toResponse(user);
     }
 
     @PutMapping("/me/preferences")
     public Map<String, Object> updatePreferences(@CurrentUser User user, @RequestBody PreferencesRequest request) {
         if (request.preferredLang() != null) {
-            user.setPreferredLang(request.preferredLang());
+            user.setPreferredLang(normalizeLanguage(request.preferredLang()));
         }
         if (request.pinTypeFilter() != null) {
             user.setPinTypeFilter(request.pinTypeFilter());
         }
         if (request.interestedArtistIds() != null) {
-            user.setInterestedArtistIds(new java.util.HashSet<>(request.interestedArtistIds()));
+            user.setInterestedArtistIds(new HashSet<>(request.interestedArtistIds()));
         }
         if (request.interestedCategories() != null) {
-            user.setInterestedCategories(new java.util.HashSet<>(request.interestedCategories()));
+            user.setInterestedCategories(new HashSet<>(request.interestedCategories()));
         }
         userRepository.save(user);
-        return Map.of(
-                "preferredLang", user.getPreferredLang(),
-                "pinTypeFilter", user.getPinTypeFilter(),
-                "interestedArtistIds", user.getInterestedArtistIds(),
-                "interestedCategories", user.getInterestedCategories());
+        return toResponse(user);
+    }
+
+    private Map<String, Object> toResponse(User user) {
+        // Map.of는 null 값을 허용하지 않아 pinTypeFilter처럼 비어있는 필드에서 터진다.
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("preferredLang", normalizeLanguage(user.getPreferredLang()));
+        response.put("pinTypeFilter", user.getPinTypeFilter());
+        response.put("interestedArtistIds", user.getInterestedArtistIds());
+        response.put("interestedCategories", user.getInterestedCategories());
+        return response;
+    }
+
+    private String normalizeLanguage(String language) {
+        if (language == null || !SUPPORTED_LANGUAGES.contains(language.toLowerCase())) {
+            return "en";
+        }
+        return language.toLowerCase();
     }
 
     public record PreferencesRequest(
             String preferredLang,
             String pinTypeFilter,
-            java.util.Set<Long> interestedArtistIds,
-            java.util.Set<String> interestedCategories) {
+            Set<Long> interestedArtistIds,
+            Set<String> interestedCategories) {
     }
 }

@@ -38,6 +38,9 @@ public class EventLocation {
     @Column(nullable = false)
     private String locationName;
 
+    /** 기능명세서 08의 events/{id} 응답 location.country 용. 지오태깅 단계(A)에서 채워짐. */
+    private String country;
+
     /** PRIMARY는 MySQL 예약어라 컬럼명을 is_primary로 지정한다. */
     @Column(name = "is_primary", nullable = false)
     @Builder.Default

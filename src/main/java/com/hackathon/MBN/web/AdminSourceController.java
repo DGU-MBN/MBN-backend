@@ -24,7 +24,7 @@ import com.hackathon.MBN.repository.SourceRepository;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/admin/sources")
+@RequestMapping("/api/admin/sources")
 @RequiredArgsConstructor
 public class AdminSourceController {
 
