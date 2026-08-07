@@ -1,6 +1,8 @@
 spring:
   application:
     name: MBN
+  config:
+    import: optional:application-local.yaml
   datasource:
     url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:kping}?useUnicode=true&characterEncoding=utf8&serverTimezone=UTC
     username: ${DB_USERNAME:root}
