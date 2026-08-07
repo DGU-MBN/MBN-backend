@@ -38,6 +38,8 @@ public class EventLocation {
     @Column(nullable = false)
     private String locationName;
 
+    /** PRIMARY는 MySQL 예약어라 컬럼명을 is_primary로 지정한다. */
+    @Column(name = "is_primary", nullable = false)
     @Builder.Default
     private boolean primary = true;
 }

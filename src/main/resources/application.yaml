@@ -12,3 +12,6 @@ spring:
     properties:
       hibernate:
         format_sql: true
+        # precision, primary 등 MySQL 예약어와 겹치는 컬럼명을 자동으로 백틱 처리한다.
+        # 엔티티가 늘어날 때마다 예약어를 따로 찾아다니지 않기 위함.
+        auto_quote_keyword: true
