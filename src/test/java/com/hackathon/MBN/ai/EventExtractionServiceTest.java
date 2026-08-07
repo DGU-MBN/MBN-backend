@@ -20,6 +20,7 @@ import com.hackathon.MBN.repository.EventLocationRepository;
 import com.hackathon.MBN.repository.EventRepository;
 import com.hackathon.MBN.repository.RawArticleRepository;
 import com.hackathon.MBN.repository.ShortRepository;
+import java.time.Instant;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -66,6 +67,82 @@ class EventExtractionServiceTest {
         when(events.save(any(Event.class))).thenAnswer(invocation -> invocation.getArgument(0));
     }
 
+    private RawArticle articleWithSourceType(long id, String title, SourceType sourceType) {
+        Source source = Source.builder().sourceType(sourceType).name("Community Source")
+                .endpoint("https://example.com").build();
+        return RawArticle.builder()
+                .id(id)
+                .source(source)
+                .url("https://example.com/" + id)
+                .contentHash("hash-" + id)
+                .title(title)
+                .description("본문 " + id)
+                .publishedAt(Instant.parse("2026-08-07T00:00:00Z"))
+                .build();
+    }
+
+    @Test
+    void forcesPendingReviewAndSkipsLocalizationForLowTrustSource() {
+        RawArticle article = articleWithSourceType(10, "찌라시 의심 글", SourceType.NAVER_BLOG);
+        stubSaveReturnsArgument();
+        when(rawArticles.findUnprocessed(any(Pageable.class))).thenReturn(List.of(article));
+        when(extractor.extract(article)).thenReturn(new ArticleExtraction(
+                "미확인 열애설", "서울 강남구", "서울특별시 강남구", null, null, null,
+                "스포츠연예", AiConfidence.LOW, "단독 제보"));
+        when(events.findTrustedCorroboration(any(), any(), any(), any())).thenReturn(List.of());
+
+        var result = new EventExtractionService(rawArticles, events, eventLocations, shorts, extractor, localizer).extractEvents(10);
+
+        assertThat(result.created()).isEqualTo(1);
+        ArgumentCaptor<Event> captor = ArgumentCaptor.forClass(Event.class);
+        verify(events).save(captor.capture());
+        Event saved = captor.getValue();
+        assertThat(saved.getStatus()).isEqualTo(com.hackathon.MBN.domain.type.EventStatus.PENDING_REVIEW);
+        assertThat(saved.getConfidence()).isEqualTo(com.hackathon.MBN.domain.type.Confidence.UNVERIFIED);
+        assertThat(saved.getReviewReason()).isEqualTo("unverified_source_pending_review");
+        assertThat(saved.getByline()).isEqualTo("AI기자");
+        verify(shorts, never()).save(any());
+    }
+
+    @Test
+    void forcesPendingReviewForYoutubeSourceToo() {
+        RawArticle article = articleWithSourceType(12, "유튜브 영상 기반 소식", SourceType.YOUTUBE_OFFICIAL);
+        stubSaveReturnsArgument();
+        when(rawArticles.findUnprocessed(any(Pageable.class))).thenReturn(List.of(article));
+        when(extractor.extract(article)).thenReturn(new ArticleExtraction(
+                "콘서트 깜짝 등장", "서울 송파구", "서울특별시 송파구", null, null, null,
+                "스포츠연예", AiConfidence.MEDIUM, "영상 캡션 근거"));
+        when(events.findTrustedCorroboration(any(), any(), any(), any())).thenReturn(List.of());
+
+        var result = new EventExtractionService(rawArticles, events, eventLocations, shorts, extractor, localizer).extractEvents(10);
+
+        assertThat(result.created()).isEqualTo(1);
+        ArgumentCaptor<Event> captor = ArgumentCaptor.forClass(Event.class);
+        verify(events).save(captor.capture());
+        assertThat(captor.getValue().getStatus()).isEqualTo(com.hackathon.MBN.domain.type.EventStatus.PENDING_REVIEW);
+        assertThat(captor.getValue().getByline()).isEqualTo("AI기자");
+        verify(shorts, never()).save(any());
+    }
+
+    @Test
+    void appendsCorroborationNoteWhenTrustedEventAlreadyExists() {
+        RawArticle article = articleWithSourceType(11, "찌라시 의심 글 2", SourceType.NAVER_CAFE);
+        stubSaveReturnsArgument();
+        when(rawArticles.findUnprocessed(any(Pageable.class))).thenReturn(List.of(article));
+        when(extractor.extract(article)).thenReturn(new ArticleExtraction(
+                "컴백 소식", "서울 강남구", "서울특별시 강남구", null, null, null,
+                "스포츠연예", AiConfidence.MEDIUM, "카페 글 근거"));
+        Event trustedEvent = Event.builder().id(99L).build();
+        when(events.findTrustedCorroboration(eq("스포츠연예"), eq("서울 강남구"), any(), any()))
+                .thenReturn(List.of(trustedEvent));
+
+        new EventExtractionService(rawArticles, events, eventLocations, shorts, extractor, localizer).extractEvents(10);
+
+        ArgumentCaptor<Event> captor = ArgumentCaptor.forClass(Event.class);
+        verify(events).save(captor.capture());
+        assertThat(captor.getValue().getEvidence()).contains("교차검증됨").contains("#99");
+    }
+
     @Test
     void skipsArticleWhenLocationNameIsNull() {
         RawArticle article = article(1, "제목");
@@ -107,6 +184,7 @@ class EventExtractionServiceTest {
         assertThat(saved.getCategory()).isEqualTo("사회");
         assertThat(saved.getAiConfidence()).isEqualTo(AiConfidence.HIGH);
         assertThat(saved.getEvidence()).isEqualTo("근거 문장");
+        assertThat(saved.getByline()).isEqualTo("뉴스");
         verify(eventLocations, never()).save(any());
     }
 

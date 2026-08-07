@@ -1,0 +1,58 @@
+[
+  {
+    "id": 1,
+    "title": "두부집 부부의 애틋한 딸 사랑",
+    "byline": "뉴스",
+    "status": "COLLECTED",
+    "summary": "휴먼다큐 사노라면 (日 오후 8시 20분) 경기도 연천에서 새벽부터 두부를 만들며 하루를 여는 오영섭·이남숙 부부의 일상이 그려진다. 가족을 먹여 살리려 전쟁에 참전하고 외국 건설 현장까지 나가 돈을 벌었던 영섭 씨와...",
+    "category": "사회일반",
+    "evidence": "경기도 연천에서 새벽부터 두부를 만들며 하루를 여는 오영섭·이남숙 부부의 일상이 그려진다.",
+    "adminArea": "경기도 연천",
+    "confidence": "UNVERIFIED",
+    "publishedAt": "2026-08-07 07:34:00.000000",
+    "aiConfidence": "MEDIUM",
+    "locationName": "경기도 연천"
+  },
+  {
+    "id": 3,
+    "title": "방은희, 어머니 고독사 6년째 자책",
+    "byline": "뉴스",
+    "status": "COLLECTED",
+    "summary": "방은희는 6일 방송된 MBN 교양 프로그램 ‘특종세상’에서 어머니가 생전에 살았던 집과 납골당을 찾아 당시를 돌아봤다. 방은희는 \"힘든 시기 다른 사람들에게 좋지 않은 모습을 보이고 싶지 않아 외출조차 피했다\"고...",
+    "category": "사회일반",
+    "evidence": "방은희는 6일 방송된 MBN 교양 프로그램 ‘특종세상’에서 어머니가 생전에 살았던 집과 납골당을 찾아 당시를 돌아봤다.",
+    "adminArea": "null",
+    "confidence": "UNVERIFIED",
+    "publishedAt": "2026-08-07 07:16:00.000000",
+    "aiConfidence": "MEDIUM",
+    "locationName": "null"
+  },
+  {
+    "id": 4,
+    "title": "홍서범·조갑경, 아들 외도 논란 속 근황",
+    "byline": "뉴스",
+    "status": "COLLECTED",
+    "summary": "전남편을 상대로 낸 사실혼 파기 손해배상 소송에서 일부 승소한 A씨는 법원에 상고장을 제출하고 대법원의 판결을 기다리고 있다. 사진 = 남궁옥분, MBC에브리원·MBN, 엑스포츠뉴스 DB",
+    "category": "사회일반",
+    "evidence": "지인들과 광화문서 회...",
+    "adminArea": "서울특별시 중구",
+    "confidence": "UNVERIFIED",
+    "publishedAt": "2026-08-07 06:43:00.000000",
+    "aiConfidence": "MEDIUM",
+    "locationName": "광화문"
+  },
+  {
+    "id": 5,
+    "title": "이동석 충주시장, 활옥동굴 불법 운영 문제 제기",
+    "byline": "뉴스",
+    "status": "COLLECTED",
+    "summary": "연합뉴스에 따르면, 이 시장은 이날 자신의 사회관계망서비스(SNS)에 \"충주의 오랜 문제(활옥동굴 불법 운영)를 언급한 글을 올린 뒤 수많은 전화를 받았다\"며 \"이는 문제를 해결했다는 답이 아닌, 정치권의 여러 루트를...",
+    "category": "정치행정",
+    "evidence": "이 시장은 이날 자신의 사회관계망서비스(SNS)에 \"충주의 오랜 문제(활옥동굴 불법 운영)를 언급한 글을 올린 뒤 수많은 전화를 받았다\"",
+    "adminArea": "충청북도 충주시",
+    "confidence": "UNVERIFIED",
+    "publishedAt": "2026-08-07 07:50:00.000000",
+    "aiConfidence": "HIGH",
+    "locationName": "충주"
+  }
+]
