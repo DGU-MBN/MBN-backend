@@ -1,14 +1,15 @@
 package com.hackathon.MBN.web;
 
+import java.util.List;
+import java.util.Map;
+
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import org.junit.jupiter.api.Test;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.hackathon.MBN.domain.Artist;
 import com.hackathon.MBN.repository.ArtistRepository;
-import java.util.List;
-import java.util.Map;
-import org.junit.jupiter.api.Test;
 
 class MetaControllerTest {
 

@@ -1,11 +1,13 @@
 package com.hackathon.MBN.config;
 
-import com.hackathon.MBN.domain.Artist;
-import com.hackathon.MBN.repository.ArtistRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import com.hackathon.MBN.domain.Artist;
+import com.hackathon.MBN.repository.ArtistRepository;
+
+import lombok.RequiredArgsConstructor;
 
 @Configuration
 @RequiredArgsConstructor

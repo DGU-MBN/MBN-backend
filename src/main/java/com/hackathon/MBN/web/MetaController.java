@@ -1,14 +1,17 @@
 package com.hackathon.MBN.web;
 
-import com.hackathon.MBN.domain.Artist;
-import com.hackathon.MBN.repository.ArtistRepository;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import lombok.RequiredArgsConstructor;
+
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.hackathon.MBN.domain.Artist;
+import com.hackathon.MBN.repository.ArtistRepository;
+
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping
