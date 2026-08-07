@@ -31,6 +31,9 @@ class NewsIngestServiceTest {
     @Mock
     SourceRepository sources;
 
+    @Mock
+    ArticleBodyFetcher bodyFetcher;
+
     @Test
     void savesNewItemsAndSkipsDuplicateHashes() {
         Source source = Source.builder()
@@ -47,7 +50,7 @@ class NewsIngestServiceTest {
         when(rawArticles.existsByContentHash(NewsIngestService.contentHash(duplicate))).thenReturn(true);
         when(rawArticles.existsByContentHash(NewsIngestService.contentHash(fresh))).thenReturn(false);
 
-        var result = new NewsIngestService(client, rawArticles, sources).ingest("MBN", 2);
+        var result = new NewsIngestService(client, rawArticles, sources, bodyFetcher).ingest("MBN", 2);
 
         assertThat(result.saved()).isEqualTo(1);
         assertThat(result.skipped()).isEqualTo(1);

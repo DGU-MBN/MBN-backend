@@ -21,14 +21,17 @@ public class NewsIngestService {
     private final NaverNewsClient naverNewsClient;
     private final RawArticleRepository rawArticles;
     private final SourceRepository sources;
+    private final ArticleBodyFetcher bodyFetcher;
 
     public NewsIngestService(
             NaverNewsClient naverNewsClient,
             RawArticleRepository rawArticles,
-            SourceRepository sources) {
+            SourceRepository sources,
+            ArticleBodyFetcher bodyFetcher) {
         this.naverNewsClient = naverNewsClient;
         this.rawArticles = rawArticles;
         this.sources = sources;
+        this.bodyFetcher = bodyFetcher;
     }
 
     @Transactional
@@ -51,6 +54,7 @@ public class NewsIngestService {
                     .contentHash(hash)
                     .title(truncate(item.title(), 500))
                     .description(item.description())
+                    .content(fetchBodyOrNull(item.url()))
                     .publishedAt(item.publishedAt())
                     .lastSeenAt(now)
                     .build());
@@ -79,6 +83,15 @@ public class NewsIngestService {
                         .pollIntervalMin(10)
                         .mapsToPinType(PinType.ORIGIN)
                         .build()));
+    }
+
+    private String fetchBodyOrNull(String url) {
+        try {
+            return bodyFetcher.fetch(url);
+        } catch (Exception ex) {
+            // 크롤링 실패해도 수집 자체는 계속, description 스니펫으로 폴백
+            return null;
+        }
     }
 
     private static String truncate(String value, int maxLength) {
