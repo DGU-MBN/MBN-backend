@@ -1,5 +1,6 @@
 package com.hackathon.MBN.news;
 
+import com.hackathon.MBN.domain.type.NewsCategory;
 import com.hackathon.MBN.ai.EventExtractionService;
 import com.hackathon.MBN.domain.type.SourceType;
 import com.hackathon.MBN.web.ApiException;
@@ -151,5 +152,21 @@ public class AdminIngestController {
 
     private static int clampCount(int count) {
         return Math.min(Math.max(count, 1), MAX_COUNT);
+    }
+
+    /** 카테고리(정치, 경제, 식품, 의료 등)의 대표 검색어들로 뉴스를 수집한다. */
+    @PostMapping("/ingest/category")
+    public NewsIngestResult ingestByCategory(
+            @RequestParam String category,
+            @RequestParam(defaultValue = "10") int display) {
+        NewsCategory parsed;
+        try {
+            parsed = NewsCategory.valueOf(category.trim());
+        } catch (IllegalArgumentException ex) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "INVALID_CATEGORY",
+                    "Unknown category: " + category);
+        }
+        int safeDisplay = Math.min(Math.max(display, 1), 100);
+        return newsIngestService.ingestByCategory(parsed, safeDisplay);
     }
 }
