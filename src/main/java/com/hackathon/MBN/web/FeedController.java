@@ -25,12 +25,17 @@ import com.hackathon.MBN.repository.EventLocationRepository;
 import com.hackathon.MBN.repository.EventRepository;
 import com.hackathon.MBN.repository.ShortRepository;
 
+import org.springframework.transaction.annotation.Transactional;
+
 import lombok.RequiredArgsConstructor;
 
 /** 기능명세서 10~12(Feed/오토플레이/출처), 08(이벤트 상세 카드) 담당. */
 @RestController
 @RequestMapping("/api")
 @RequiredArgsConstructor
+// Event.sourceArticle / EventEntity.rawArticle 이 LAZY 인데 open-in-view=false 라,
+// 트랜잭션 없이 응답을 조립하면 "no session" 으로 터진다.
+@Transactional(readOnly = true)
 public class FeedController {
 
     private static final int DEFAULT_LIMIT = 10;
@@ -170,6 +175,8 @@ public class FeedController {
         response.put("style", shortItem.getStyle() != null ? shortItem.getStyle().name() : null);
         response.put("videoUrl", shortItem.getVideoUrl());
         response.put("hlsUrl", shortItem.getHlsUrl());
+        // AI 기자 숏폼의 "원문보기"는 외부 링크가 아니라 생성된 뉴스 전문을 띄운다
+        response.put("body", shortItem.getBody());
         response.put("thumbnailUrl", shortItem.getThumbnailUrl());
         response.put("views", shortItem.getViews());
         response.put("likes", shortItem.getLikes());

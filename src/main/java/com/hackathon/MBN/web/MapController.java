@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -32,6 +33,9 @@ public class MapController {
     private final EventLocationRepository eventLocationRepository;
     private final InteractionRepository interactionRepository;
 
+    // EventLocation.event 가 LAZY 인데 open-in-view=false 라, 트랜잭션 없이
+    // loc.getEvent() 를 건드리면 "no session" 으로 터진다.
+    @Transactional(readOnly = true)
     @GetMapping("/pins")
     public List<Map<String, Object>> getPins(
             @RequestParam double north,
